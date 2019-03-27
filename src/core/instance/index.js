@@ -18,8 +18,8 @@ function Vue(options) {
 // 引入五个方法分别执行，传入构造函数Vue
 initMixin(Vue) // 往Vue原型里加_init方法在构造函数里面调用了
 stateMixin(Vue)
-eventsMixin(Vue)
-lifecycleMixin(Vue)
-renderMixin(Vue)
+eventsMixin(Vue) // on once off emit
+lifecycleMixin(Vue) // update forceUpdate destroy
+renderMixin(Vue) // $nextTick _render
 
 export default Vue
