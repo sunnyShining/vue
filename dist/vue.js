@@ -1200,145 +1200,145 @@
      * Options with restrictions
      */
     {
-      strats.el = strats.propsData = function (parent, child, vm, key) {
-        if (!vm) {
-          warn(
-            "option \"" + key + "\" can only be used during instance " +
-            'creation with the `new` keyword.'
-          );
-        }
-        return defaultStrat(parent, child)
-      };
+        strats.el = strats.propsData = function(parent, child, vm, key) {
+            if (!vm) {
+                warn(
+                    "option \"" + key + "\" can only be used during instance " +
+                    'creation with the `new` keyword.'
+                );
+            }
+            return defaultStrat(parent, child)
+        };
     }
 
     /**
      * Helper that recursively merges two data objects together.
      */
-    function mergeData (to, from) {
-      if (!from) { return to }
-      var key, toVal, fromVal;
+    function mergeData(to, from) {
+        if (!from) { return to }
+        var key, toVal, fromVal;
 
-      var keys = hasSymbol
-        ? Reflect.ownKeys(from)
-        : Object.keys(from);
+        var keys = hasSymbol ?
+            Reflect.ownKeys(from) :
+            Object.keys(from);
 
-      for (var i = 0; i < keys.length; i++) {
-        key = keys[i];
-        // in case the object is already observed...
-        if (key === '__ob__') { continue }
-        toVal = to[key];
-        fromVal = from[key];
-        if (!hasOwn(to, key)) {
-          set(to, key, fromVal);
-        } else if (
-          toVal !== fromVal &&
-          isPlainObject(toVal) &&
-          isPlainObject(fromVal)
-        ) {
-          mergeData(toVal, fromVal);
+        for (var i = 0; i < keys.length; i++) {
+            key = keys[i];
+            // in case the object is already observed...
+            if (key === '__ob__') { continue }
+            toVal = to[key];
+            fromVal = from[key];
+            if (!hasOwn(to, key)) {
+                set(to, key, fromVal);
+            } else if (
+                toVal !== fromVal &&
+                isPlainObject(toVal) &&
+                isPlainObject(fromVal)
+            ) {
+                mergeData(toVal, fromVal);
+            }
         }
-      }
-      return to
+        return to
     }
 
     /**
      * Data
      */
-    function mergeDataOrFn (
-      parentVal,
-      childVal,
-      vm
+    function mergeDataOrFn(
+        parentVal,
+        childVal,
+        vm
     ) {
-      if (!vm) {
-        // in a Vue.extend merge, both should be functions
-        if (!childVal) {
-          return parentVal
+        if (!vm) {
+            // in a Vue.extend merge, both should be functions
+            if (!childVal) {
+                return parentVal
+            }
+            if (!parentVal) {
+                return childVal
+            }
+            // when parentVal & childVal are both present,
+            // we need to return a function that returns the
+            // merged result of both functions... no need to
+            // check if parentVal is a function here because
+            // it has to be a function to pass previous merges.
+            return function mergedDataFn() {
+                return mergeData(
+                    typeof childVal === 'function' ? childVal.call(this, this) : childVal,
+                    typeof parentVal === 'function' ? parentVal.call(this, this) : parentVal
+                )
+            }
+        } else {
+            return function mergedInstanceDataFn() {
+                // instance merge
+                var instanceData = typeof childVal === 'function' ?
+                    childVal.call(vm, vm) :
+                    childVal;
+                var defaultData = typeof parentVal === 'function' ?
+                    parentVal.call(vm, vm) :
+                    parentVal;
+                if (instanceData) {
+                    return mergeData(instanceData, defaultData)
+                } else {
+                    return defaultData
+                }
+            }
         }
-        if (!parentVal) {
-          return childVal
-        }
-        // when parentVal & childVal are both present,
-        // we need to return a function that returns the
-        // merged result of both functions... no need to
-        // check if parentVal is a function here because
-        // it has to be a function to pass previous merges.
-        return function mergedDataFn () {
-          return mergeData(
-            typeof childVal === 'function' ? childVal.call(this, this) : childVal,
-            typeof parentVal === 'function' ? parentVal.call(this, this) : parentVal
-          )
-        }
-      } else {
-        return function mergedInstanceDataFn () {
-          // instance merge
-          var instanceData = typeof childVal === 'function'
-            ? childVal.call(vm, vm)
-            : childVal;
-          var defaultData = typeof parentVal === 'function'
-            ? parentVal.call(vm, vm)
-            : parentVal;
-          if (instanceData) {
-            return mergeData(instanceData, defaultData)
-          } else {
-            return defaultData
-          }
-        }
-      }
     }
 
-    strats.data = function (
-      parentVal,
-      childVal,
-      vm
+    strats.data = function(
+        parentVal,
+        childVal,
+        vm
     ) {
-      if (!vm) {
-        if (childVal && typeof childVal !== 'function') {
-          warn(
-            'The "data" option should be a function ' +
-            'that returns a per-instance value in component ' +
-            'definitions.',
-            vm
-          );
+        if (!vm) {
+            if (childVal && typeof childVal !== 'function') {
+                warn(
+                    'The "data" option should be a function ' +
+                    'that returns a per-instance value in component ' +
+                    'definitions.',
+                    vm
+                );
 
-          return parentVal
+                return parentVal
+            }
+            return mergeDataOrFn(parentVal, childVal)
         }
-        return mergeDataOrFn(parentVal, childVal)
-      }
 
-      return mergeDataOrFn(parentVal, childVal, vm)
+        return mergeDataOrFn(parentVal, childVal, vm)
     };
 
     /**
      * Hooks and props are merged as arrays.
      */
-    function mergeHook (
-      parentVal,
-      childVal
+    function mergeHook(
+        parentVal ,
+        childVal
     ) {
-      var res = childVal
-        ? parentVal
-          ? parentVal.concat(childVal)
-          : Array.isArray(childVal)
-            ? childVal
-            : [childVal]
-        : parentVal;
-      return res
-        ? dedupeHooks(res)
-        : res
+        var res = childVal ?
+            parentVal ?
+            parentVal.concat(childVal) :
+            Array.isArray(childVal) ?
+            childVal :
+            [childVal] :
+            parentVal;
+        return res ?
+            dedupeHooks(res) :
+            res
     }
 
-    function dedupeHooks (hooks) {
-      var res = [];
-      for (var i = 0; i < hooks.length; i++) {
-        if (res.indexOf(hooks[i]) === -1) {
-          res.push(hooks[i]);
+    function dedupeHooks(hooks) {
+        var res = [];
+        for (var i = 0; i < hooks.length; i++) {
+            if (res.indexOf(hooks[i]) === -1) {
+                res.push(hooks[i]);
+            }
         }
-      }
-      return res
+        return res
     }
 
     LIFECYCLE_HOOKS.forEach(function (hook) {
-      strats[hook] = mergeHook;
+        strats[hook] = mergeHook;
     });
 
     /**
@@ -1348,23 +1348,23 @@
      * a three-way merge between constructor options, instance
      * options and parent options.
      */
-    function mergeAssets (
-      parentVal,
-      childVal,
-      vm,
-      key
+    function mergeAssets(
+        parentVal,
+        childVal,
+        vm,
+        key
     ) {
-      var res = Object.create(parentVal || null);
-      if (childVal) {
-        assertObjectType(key, childVal, vm);
-        return extend(res, childVal)
-      } else {
-        return res
-      }
+        var res = Object.create(parentVal || null);
+        if (childVal) {
+            assertObjectType(key, childVal, vm);
+            return extend(res, childVal)
+        } else {
+            return res
+        }
     }
 
-    ASSET_TYPES.forEach(function (type) {
-      strats[type + 's'] = mergeAssets;
+    ASSET_TYPES.forEach(function(type) {
+        strats[type + 's'] = mergeAssets;
     });
 
     /**
@@ -1373,233 +1373,234 @@
      * Watchers hashes should not overwrite one
      * another, so we merge them as arrays.
      */
-    strats.watch = function (
-      parentVal,
-      childVal,
-      vm,
-      key
+    strats.watch = function(
+        parentVal,
+        childVal,
+        vm,
+        key
     ) {
-      // work around Firefox's Object.prototype.watch...
-      if (parentVal === nativeWatch) { parentVal = undefined; }
-      if (childVal === nativeWatch) { childVal = undefined; }
-      /* istanbul ignore if */
-      if (!childVal) { return Object.create(parentVal || null) }
-      {
-        assertObjectType(key, childVal, vm);
-      }
-      if (!parentVal) { return childVal }
-      var ret = {};
-      extend(ret, parentVal);
-      for (var key$1 in childVal) {
-        var parent = ret[key$1];
-        var child = childVal[key$1];
-        if (parent && !Array.isArray(parent)) {
-          parent = [parent];
+        // work around Firefox's Object.prototype.watch...
+        if (parentVal === nativeWatch) { parentVal = undefined; }
+        if (childVal === nativeWatch) { childVal = undefined; }
+        /* istanbul ignore if */
+        if (!childVal) { return Object.create(parentVal || null) }
+        {
+            assertObjectType(key, childVal, vm);
         }
-        ret[key$1] = parent
-          ? parent.concat(child)
-          : Array.isArray(child) ? child : [child];
-      }
-      return ret
+        if (!parentVal) { return childVal }
+        var ret = {};
+        extend(ret, parentVal);
+        for (var key$1 in childVal) {
+            var parent = ret[key$1];
+            var child = childVal[key$1];
+            if (parent && !Array.isArray(parent)) {
+                parent = [parent];
+            }
+            ret[key$1] = parent ?
+                parent.concat(child) :
+                Array.isArray(child) ? child : [child];
+        }
+        return ret
     };
 
     /**
      * Other object hashes.
      */
     strats.props =
-    strats.methods =
-    strats.inject =
-    strats.computed = function (
-      parentVal,
-      childVal,
-      vm,
-      key
-    ) {
-      if (childVal && "development" !== 'production') {
-        assertObjectType(key, childVal, vm);
-      }
-      if (!parentVal) { return childVal }
-      var ret = Object.create(null);
-      extend(ret, parentVal);
-      if (childVal) { extend(ret, childVal); }
-      return ret
-    };
+        strats.methods =
+        strats.inject =
+        strats.computed = function(
+            parentVal,
+            childVal,
+            vm,
+            key
+        ) {
+            if (childVal && "development" !== 'production') {
+                assertObjectType(key, childVal, vm);
+            }
+            if (!parentVal) { return childVal }
+            var ret = Object.create(null);
+            extend(ret, parentVal);
+            if (childVal) { extend(ret, childVal); }
+            return ret
+        };
     strats.provide = mergeDataOrFn;
 
     /**
      * Default strategy.
      */
-    var defaultStrat = function (parentVal, childVal) {
-      return childVal === undefined
-        ? parentVal
-        : childVal
+    var defaultStrat = function(parentVal, childVal) {
+        return childVal === undefined ?
+            parentVal :
+            childVal
     };
 
     /**
      * Validate component names
      */
-    function checkComponents (options) {
-      for (var key in options.components) {
-        validateComponentName(key);
-      }
+    function checkComponents(options) {
+        for (var key in options.components) {
+            validateComponentName(key);
+        }
     }
 
-    function validateComponentName (name) {
-      if (!new RegExp(("^[a-zA-Z][\\-\\.0-9_" + (unicodeRegExp.source) + "]*$")).test(name)) {
-        warn(
-          'Invalid component name: "' + name + '". Component names ' +
-          'should conform to valid custom element name in html5 specification.'
-        );
-      }
-      if (isBuiltInTag(name) || config.isReservedTag(name)) {
-        warn(
-          'Do not use built-in or reserved HTML elements as component ' +
-          'id: ' + name
-        );
-      }
+    function validateComponentName(name) {
+        if (!new RegExp(("^[a-zA-Z][\\-\\.0-9_" + (unicodeRegExp.source) + "]*$")).test(name)) {
+            warn(
+                'Invalid component name: "' + name + '". Component names ' +
+                'should conform to valid custom element name in html5 specification.'
+            );
+        }
+        if (isBuiltInTag(name) || config.isReservedTag(name)) {
+            warn(
+                'Do not use built-in or reserved HTML elements as component ' +
+                'id: ' + name
+            );
+        }
     }
 
     /**
      * Ensure all props option syntax are normalized into the
      * Object-based format.
      */
-    function normalizeProps (options, vm) {
-      var props = options.props;
-      if (!props) { return }
-      var res = {};
-      var i, val, name;
-      if (Array.isArray(props)) {
-        i = props.length;
-        while (i--) {
-          val = props[i];
-          if (typeof val === 'string') {
-            name = camelize(val);
-            res[name] = { type: null };
-          } else {
-            warn('props must be strings when using array syntax.');
-          }
+    function normalizeProps(options, vm) {
+        var props = options.props;
+        if (!props) { return }
+        var res = {};
+        var i, val, name;
+        if (Array.isArray(props)) {
+            i = props.length;
+            while (i--) {
+                val = props[i];
+                if (typeof val === 'string') {
+                    name = camelize(val);
+                    res[name] = { type: null };
+                } else {
+                    warn('props must be strings when using array syntax.');
+                }
+            }
+        } else if (isPlainObject(props)) {
+            for (var key in props) {
+                val = props[key];
+                name = camelize(key);
+                res[name] = isPlainObject(val) ?
+                    val :
+                    { type: val };
+            }
+        } else {
+            warn(
+                "Invalid value for option \"props\": expected an Array or an Object, " +
+                "but got " + (toRawType(props)) + ".",
+                vm
+            );
         }
-      } else if (isPlainObject(props)) {
-        for (var key in props) {
-          val = props[key];
-          name = camelize(key);
-          res[name] = isPlainObject(val)
-            ? val
-            : { type: val };
-        }
-      } else {
-        warn(
-          "Invalid value for option \"props\": expected an Array or an Object, " +
-          "but got " + (toRawType(props)) + ".",
-          vm
-        );
-      }
-      options.props = res;
+        options.props = res;
     }
 
     /**
      * Normalize all injections into Object-based format
      */
-    function normalizeInject (options, vm) {
-      var inject = options.inject;
-      if (!inject) { return }
-      var normalized = options.inject = {};
-      if (Array.isArray(inject)) {
-        for (var i = 0; i < inject.length; i++) {
-          normalized[inject[i]] = { from: inject[i] };
+    function normalizeInject(options, vm) {
+        var inject = options.inject;
+        if (!inject) { return }
+        var normalized = options.inject = {};
+        if (Array.isArray(inject)) {
+            for (var i = 0; i < inject.length; i++) {
+                normalized[inject[i]] = { from: inject[i] };
+            }
+        } else if (isPlainObject(inject)) {
+            for (var key in inject) {
+                var val = inject[key];
+                normalized[key] = isPlainObject(val) ?
+                    extend({ from: key }, val) :
+                    { from: val };
+            }
+        } else {
+            warn(
+                "Invalid value for option \"inject\": expected an Array or an Object, " +
+                "but got " + (toRawType(inject)) + ".",
+                vm
+            );
         }
-      } else if (isPlainObject(inject)) {
-        for (var key in inject) {
-          var val = inject[key];
-          normalized[key] = isPlainObject(val)
-            ? extend({ from: key }, val)
-            : { from: val };
-        }
-      } else {
-        warn(
-          "Invalid value for option \"inject\": expected an Array or an Object, " +
-          "but got " + (toRawType(inject)) + ".",
-          vm
-        );
-      }
     }
 
     /**
      * Normalize raw function directives into object format.
      */
-    function normalizeDirectives (options) {
-      var dirs = options.directives;
-      if (dirs) {
-        for (var key in dirs) {
-          var def$$1 = dirs[key];
-          if (typeof def$$1 === 'function') {
-            dirs[key] = { bind: def$$1, update: def$$1 };
-          }
+    function normalizeDirectives(options) {
+        var dirs = options.directives;
+        if (dirs) {
+            for (var key in dirs) {
+                var def$$1 = dirs[key];
+                if (typeof def$$1 === 'function') {
+                    dirs[key] = { bind: def$$1, update: def$$1 };
+                }
+            }
         }
-      }
     }
 
-    function assertObjectType (name, value, vm) {
-      if (!isPlainObject(value)) {
-        warn(
-          "Invalid value for option \"" + name + "\": expected an Object, " +
-          "but got " + (toRawType(value)) + ".",
-          vm
-        );
-      }
+    function assertObjectType(name, value, vm) {
+        if (!isPlainObject(value)) {
+            warn(
+                "Invalid value for option \"" + name + "\": expected an Object, " +
+                "but got " + (toRawType(value)) + ".",
+                vm
+            );
+        }
     }
 
     /**
      * Merge two option objects into a new one.
      * Core utility used in both instantiation and inheritance.
      */
-    function mergeOptions (
-      parent,
-      child,
-      vm
+    function mergeOptions(
+        parent,
+        child,
+        vm
     ) {
-      {
-        checkComponents(child);
-      }
-
-      if (typeof child === 'function') {
-        child = child.options;
-      }
-
-      normalizeProps(child, vm);
-      normalizeInject(child, vm);
-      normalizeDirectives(child);
-
-      // Apply extends and mixins on the child options,
-      // but only if it is a raw options object that isn't
-      // the result of another mergeOptions call.
-      // Only merged options has the _base property.
-      if (!child._base) {
-        if (child.extends) {
-          parent = mergeOptions(parent, child.extends, vm);
+        {
+            checkComponents(child);
         }
-        if (child.mixins) {
-          for (var i = 0, l = child.mixins.length; i < l; i++) {
-            parent = mergeOptions(parent, child.mixins[i], vm);
-          }
-        }
-      }
 
-      var options = {};
-      var key;
-      for (key in parent) {
-        mergeField(key);
-      }
-      for (key in child) {
-        if (!hasOwn(parent, key)) {
-          mergeField(key);
+        if (typeof child === 'function') {
+            child = child.options;
         }
-      }
-      function mergeField (key) {
-        var strat = strats[key] || defaultStrat;
-        options[key] = strat(parent[key], child[key], vm, key);
-      }
-      return options
+
+        normalizeProps(child, vm);
+        normalizeInject(child, vm);
+        normalizeDirectives(child);
+
+        // Apply extends and mixins on the child options,
+        // but only if it is a raw options object that isn't
+        // the result of another mergeOptions call.
+        // Only merged options has the _base property.
+        if (!child._base) {
+            if (child.extends) {
+                parent = mergeOptions(parent, child.extends, vm);
+            }
+            if (child.mixins) {
+                for (var i = 0, l = child.mixins.length; i < l; i++) {
+                    parent = mergeOptions(parent, child.mixins[i], vm);
+                }
+            }
+        }
+
+        var options = {};
+        var key;
+        for (key in parent) {
+            mergeField(key);
+        }
+        for (key in child) {
+            if (!hasOwn(parent, key)) {
+                mergeField(key);
+            }
+        }
+
+        function mergeField(key) {
+            var strat = strats[key] || defaultStrat;
+            options[key] = strat(parent[key], child[key], vm, key);
+        }
+        return options
     }
 
     /**
@@ -1607,32 +1608,32 @@
      * This function is used because child instances need access
      * to assets defined in its ancestor chain.
      */
-    function resolveAsset (
-      options,
-      type,
-      id,
-      warnMissing
-    ) {
-      /* istanbul ignore if */
-      if (typeof id !== 'string') {
-        return
-      }
-      var assets = options[type];
-      // check local registration variations first
-      if (hasOwn(assets, id)) { return assets[id] }
-      var camelizedId = camelize(id);
-      if (hasOwn(assets, camelizedId)) { return assets[camelizedId] }
-      var PascalCaseId = capitalize(camelizedId);
-      if (hasOwn(assets, PascalCaseId)) { return assets[PascalCaseId] }
-      // fallback to prototype chain
-      var res = assets[id] || assets[camelizedId] || assets[PascalCaseId];
-      if (warnMissing && !res) {
-        warn(
-          'Failed to resolve ' + type.slice(0, -1) + ': ' + id,
-          options
-        );
-      }
-      return res
+    function resolveAsset(
+        options,
+        type,
+        id,
+        warnMissing
+    ){
+        /* istanbul ignore if */
+        if (typeof id !== 'string') {
+            return
+        }
+        var assets = options[type];
+        // check local registration variations first
+        if (hasOwn(assets, id)) { return assets[id] }
+        var camelizedId = camelize(id);
+        if (hasOwn(assets, camelizedId)) { return assets[camelizedId] }
+        var PascalCaseId = capitalize(camelizedId);
+        if (hasOwn(assets, PascalCaseId)) { return assets[PascalCaseId] }
+        // fallback to prototype chain
+        var res = assets[id] || assets[camelizedId] || assets[PascalCaseId];
+        if (warnMissing && !res) {
+            warn(
+                'Failed to resolve ' + type.slice(0, -1) + ': ' + id,
+                options
+            );
+        }
+        return res
     }
 
     /*  */
@@ -5005,8 +5006,9 @@
             }
 
             // a flag to avoid this being observed
+            // 标识一个对象是 Vue 实例
             vm._isVue = true;
-            // merge options
+            // merge options Vue创建组件才有_isComponent
             if (options && options._isComponent) {
                 // optimize internal component instantiation
                 // since dynamic options merging is pretty slow, and none of the

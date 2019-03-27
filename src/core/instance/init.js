@@ -28,8 +28,9 @@ export function initMixin(Vue: Class<Component>) {
         }
 
         // a flag to avoid this being observed
+        // 标识一个对象是 Vue 实例
         vm._isVue = true
-        // merge options
+        // merge options Vue创建组件才有_isComponent
         if (options && options._isComponent) {
             // optimize internal component instantiation
             // since dynamic options merging is pretty slow, and none of the
