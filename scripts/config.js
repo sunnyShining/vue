@@ -5,7 +5,7 @@ const cjs = require('rollup-plugin-commonjs')
 const replace = require('rollup-plugin-replace')
 const node = require('rollup-plugin-node-resolve')
 const flow = require('rollup-plugin-flow-no-whitespace')
-const version = process.env.VERSION || require('../package.json').version
+const version = process.env.VERSION || require('../package.json').version // 版本号替换
 const weexVersion = process.env.WEEX_VERSION || require('../packages/weex-vue-framework/package.json').version
 const featureFlags = require('./feature-flags')
 
@@ -241,7 +241,7 @@ function genConfig(name) {
     const vars = {
         __WEEX__: !!opts.weex,
         __WEEX_VERSION__: weexVersion,
-        __VERSION__: version
+        __VERSION__: version // 替换版本
     }
     // feature flags
     Object.keys(featureFlags).forEach(key => {
