@@ -16,8 +16,8 @@ const idToTemplate = cached(id => {
 
 const mount = Vue.prototype.$mount
 Vue.prototype.$mount = function(
-    el ? : string | Element,
-    hydrating ? : boolean
+    el?: string | Element,
+    hydrating?: boolean
 ): Component {
     el = el && query(el)
 
@@ -96,6 +96,7 @@ function getOuterHTML(el: Element): string {
     }
 }
 
+// 在 Vue 上添加一个全局API `Vue.compile` 其值为上面导入进来的 compileToFunctions
 Vue.compile = compileToFunctions
 
 export default Vue

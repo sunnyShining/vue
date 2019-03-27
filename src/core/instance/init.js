@@ -12,14 +12,15 @@ import { extend, mergeOptions, formatComponentName } from '../util/index'
 
 let uid = 0
 
-export function initMixin(Vue: Class < Component > ) {
-    Vue.prototype._init = function(options ? : Object) {
-        const vm: Component = this
+export function initMixin(Vue: Class<Component>) {
+    Vue.prototype._init = function(options?: Object) {
+        const vm: Component = this // Vue实例
         // a uid
-        vm._uid = uid++
+        vm._uid = uid++ // 每次新增一个实例uid加1
 
         let startTag, endTag
         /* istanbul ignore if */
+        // Vue.config.performance为true时开启性能跟踪
         if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
             startTag = `vue-perf-start:${vm._uid}`
             endTag = `vue-perf-end:${vm._uid}`
@@ -59,6 +60,7 @@ export function initMixin(Vue: Class < Component > ) {
         callHook(vm, 'created')
 
         /* istanbul ignore if */
+        // Vue.config.performance为true时开启性能跟踪
         if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
             vm._name = formatComponentName(vm, false)
             mark(endTag)
@@ -90,7 +92,7 @@ export function initInternalComponent(vm: Component, options: InternalComponentO
     }
 }
 
-export function resolveConstructorOptions(Ctor: Class < Component > ) {
+export function resolveConstructorOptions(Ctor: Class<Component> ) {
     let options = Ctor.options
     if (Ctor.super) {
         const superOptions = resolveConstructorOptions(Ctor.super)
@@ -114,7 +116,7 @@ export function resolveConstructorOptions(Ctor: Class < Component > ) {
     return options
 }
 
-function resolveModifiedOptions(Ctor: Class < Component > ): ? Object {
+function resolveModifiedOptions(Ctor: Class<Component> ): ? Object {
     let modified
     const latest = Ctor.options
     const sealed = Ctor.sealedOptions
