@@ -4,7 +4,7 @@ import { isServerRendering } from 'core/util/env'
 import { FunctionalRenderContext } from 'core/vdom/create-functional-component'
 
 // 将 Vue 构造函数作为参数，传递给 initGlobalAPI 方法，该方法来自 ./global-api/index.js 文件
-initGlobalAPI(Vue)
+initGlobalAPI(Vue) // 注入一些全局的api
 
 // 在 Vue.prototype 上添加 $isServer 属性，该属性代理了来自 core/util/env.js 文件的 isServerRendering 方法
 Object.defineProperty(Vue.prototype, '$isServer', {
