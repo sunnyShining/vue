@@ -305,6 +305,7 @@ function normalizeProps(options: Object, vm: ? Component) {
         while (i--) {
             val = props[i]
             if (typeof val === 'string') {
+                // 将中横线转驼峰
                 name = camelize(val)
                 res[name] = { type: null }
             } else if (process.env.NODE_ENV !== 'production') {
@@ -332,9 +333,11 @@ function normalizeProps(options: Object, vm: ? Component) {
 /**
  * Normalize all injections into Object-based format
  */
+// 规范inject
 function normalizeInject(options: Object, vm: ? Component) {
     const inject = options.inject
     if (!inject) return
+    // 修改normalized，options.inject一样修改了
     const normalized = options.inject = {}
     if (Array.isArray(inject)) {
         for (let i = 0; i < inject.length; i++) {
@@ -397,7 +400,7 @@ export function mergeOptions(
     if (typeof child === 'function') {
         child = child.options
     }
-
+    // 规范化props
     normalizeProps(child, vm)
     normalizeInject(child, vm)
     normalizeDirectives(child)
